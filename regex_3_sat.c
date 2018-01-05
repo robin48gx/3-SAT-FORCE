@@ -35,32 +35,32 @@ int check(char *rregx, int pattern)
 
         if (rregx[i] == 'X') {
             printf(" pass X ");
-            continue;           // DON'T care
         }
 
-        if (rregx[i] == '0')
+        if (rregx[i] == '0') {
             if ((pattern & bit) == 0) {
                 printf(" pass-0 ");
-                continue;       // correct
             } else {
                 printf(" fail-0 ");
                 ret = 1;        // FAIL
             }
         }
 
-        if (rregx[i] == '1')
-            if ((pattern & bit) == 1) {
+        if (rregx[i] == '1') {
+            if ((pattern & bit)) {
                 printf(" pass-1 ");
-                continue;       // correct
             } else {
                 printf(" fail-1 ");
                 ret = 1;        // FAIL
             }
         }
+
+
+
     } // for all six bits
 
 
-    if (ret)
+    if (ret) // if ret true an error was found applying one pattern to the inout binary number
         printf(" fails...\n");
     else
         printf(" passes...\n");
@@ -95,36 +95,50 @@ int main()
 {
     int ii, j, k, cc;
     int failed;
-    int all_clear;
+    int triplet_has_failed;
 
     printf("rregx\n");
-    for (j = 0; j < 64; j++) {
-        all_clear = 1;
+    for (j = 0; j < 64; j++) { // for all possible patterns i.e. binary 6 bit number
+
+	triplet_has_failed = 0;
 
         for (ii = 0; ii < 14; ii++) {   // for all 14 sets of ored regexs
+	    if ( triplet_has_failed ) continue; // move to next 6 bit pattern, this one has already failed
+	    printf("moving to %d th regex\n",ii+1);
+            failed = 0; // make it get cleared if one triplet passes
 
-            failed = 1;
-
+	    printf("--------------------\n");
             for (k = 0; k < 3; k++) {   // for the three regexs in the ored set
 
-                printf(" 0x%X : check %d %d  :== %d\n", j, j, k, cc = check(rx[ii][k], j));
-                if (cc == 0)
-                    failed = 0;
+                //printf("TRIPLE CHECK 0x%X :  %d %d  :== %d\n", j, j, k, cc = check(rx[ii][k], j));
+		cc = check(rx[ii][k], j);
+		// if one of the three patterns passed then its OK
+                if (cc == 1)
+                    failed++; // so count the number of times it fails
             }
-            if (!failed) {
+	    printf("--------------------\n");
+
+                //printf("\n %dth REGEX--------- for 0x%X 0b%s-----%s %s %s------->\n",
+		//	       	ii+1,j, to_bin(j), rx[ii][0], rx[ii][1],rx[ii][2]);
+            if (failed<3) {
                 // at least one passed!
                 //
-                printf("PASSED for 0x%X\n", j);
+                printf("PASSED for 0x%X failed=%d\n", j, failed);
             } else {
-                printf("FAILED------------- for 0x%X------------>\n", j);
-                all_clear = 0;
+                printf("FAILED for 0x%X failed = %d\n", j, failed);
+
+                //printf("FAILED----on %dth REGEX--------- for 0x%X 0b%s-----%s %s %s------->\n",
+	        //		       	ii+1,j, to_bin(j), rx[ii][0], rx[ii][1],rx[ii][2]);
+                triplet_has_failed = 1; // no one of the fourteen triplets of regexs FAILED.
             }
         }
 
-        if (all_clear)
+        if (!triplet_has_failed)
             printf(" Pattern 0x%X 0b%s passed\n", j, to_bin(j));
-        else
+        else {
             printf(" Pattern 0x%X 0b%s failed\n", j, to_bin(j));
+	    continue; // no point carrying on, if all theree failed then this bit pattern does not work
+	}
 
     }
     return 0;
